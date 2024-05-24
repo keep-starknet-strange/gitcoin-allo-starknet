@@ -1,7 +1,7 @@
 <div align="center">
 
-<h1> Gitcoin Allo protocol for Starknet 🐺 </h1>
-<h2> Core Allo V2 Contracts in Cairo </h2>
+  <img src="resources/logo/gitcoin-allo-starknet.png" alt="gitcoin-allo-starknet" height="100"/>
+  <h2> Gitcoin Allo protocol for Starknet </h2>
 
 [![Test Workflow Status](https://github.com/keep-starknet-strange/gitcoin-allo-starknet/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/gitcoin-allo-starknet/actions/workflows/testnet.yml)
 
