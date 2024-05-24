@@ -15,32 +15,16 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠙⠋⠛⠙⠋⠛⠙⠋⠛⠙⠋⠃⠀⠀⠀⠀⠀⠀⠀⠀⠠⠿⠻⠟⠿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⠟⠿⠟⠿⠆⠀⠸⠿⠿⠟⠯⠀⠀⠀⠸⠿⠿⠿⠏⠀⠀⠀⠀⠀⠈⠉⠻⠻⡿⣿⢿⡿⡿⠿⠛⠁⠀⠀⠀⠀⠀⠀
 //                    allo.gitcoin.co
 
-/// Allo contract
-/// Solidity equivalent: https://github.com/allo-protocol/allo-v2/blob/main/contracts/core/Allo.sol
+/// Registry contract
+/// Solidity equivalent: https://github.com/allo-protocol/allo-v2/blob/main/contracts/core/Registry.sol
 
-/// Allo contract interface
-/// Interface for the Allo contract. It exposes all functions needed to use the Allo protocol.
+/// Registry contract interface
+/// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IAllo<TContractState> {
-    /// Initialize the Allo contract
-    /// # Arguments
-    /// - owner Address of the owner
-    /// - registry Address of the registry contract
-    /// - treasury Address of the treasury
-    /// - percentFee Percentage for the fee
-    /// - baseFee Base fee amount
-    fn initialize(
-        ref self: TContractState,
-        owner: ContractAddress,
-        registry: ContractAddress,
-        treasury: ContractAddress,
-        percent_fee: u256,
-        base_fee: u256
-    );
-}
+pub trait IRegistry<TContractState> {}
 
 #[starknet::contract]
-pub mod Allo {
+pub mod Registry {
     use starknet::ContractAddress;
 
     // ==========================
@@ -54,26 +38,8 @@ pub mod Allo {
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        PoolCreated: PoolCreated,
-    }
+    enum Event {}
 
-    /// Event emitted when a new pool is created
-    #[derive(Drop, starknet::Event)]
-    struct PoolCreated {
-        /// ID of the pool created
-        #[key]
-        pool_id: u256,
-        /// ID of the profile the pool is associated with
-        #[key]
-        profile_id: u256,
-        /// Address of the strategy contract
-        strategy: ContractAddress,
-        /// Address of the token pool was funded with when created
-        token: ContractAddress,
-        /// Amount pool was funded with when created
-        amount: u256,
-    }
 
     #[constructor]
     fn constructor(ref self: ContractState) {}
@@ -83,21 +49,5 @@ pub mod Allo {
     /// ==== External/Public Functions =====
     /// ====================================
     #[abi(embed_v0)]
-    impl Allo of super::IAllo<ContractState> {
-        /// Initialize the Allo contract
-        /// # Arguments
-        /// - owner Address of the owner
-        /// - registry Address of the registry contract
-        /// - treasury Address of the treasury
-        /// - percentFee Percentage for the fee
-        /// - baseFee Base fee amount
-        fn initialize(
-            ref self: ContractState,
-            owner: ContractAddress,
-            registry: ContractAddress,
-            treasury: ContractAddress,
-            percent_fee: u256,
-            base_fee: u256
-        ) {}
-    }
+    impl Registry of super::IRegistry<ContractState> {}
 }
