@@ -50,4 +50,10 @@ pub mod Registry {
     /// ====================================
     #[abi(embed_v0)]
     impl Registry of super::IRegistry<ContractState> {}
+
+    /// ====================================
+    /// ==== Internal Functions ============
+    /// ====================================
+    #[generate_trait]
+    impl RegistryInternalImpl of RegistryInternalTrait {}
 }
