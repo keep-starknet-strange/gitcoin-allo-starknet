@@ -100,4 +100,10 @@ pub mod Allo {
             base_fee: u256
         ) {}
     }
+
+    /// ====================================
+    /// ==== Internal Functions ============
+    /// ====================================
+    #[generate_trait]
+    impl AlloInternalImpl of AlloInternalTrait {}
 }
