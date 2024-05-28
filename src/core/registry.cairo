@@ -42,7 +42,7 @@ pub mod Registry {
 
 
     #[constructor]
-    fn constructor(ref self: ContractState) {// Issue no #19
+    fn constructor(ref self: ContractState) { // Issue no #19
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L78C40-L79C9
     // Implement the functionality of making sure the address is not zero and
     // grant the Allo owner role to the owner.
