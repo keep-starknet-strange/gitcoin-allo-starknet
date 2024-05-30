@@ -119,21 +119,24 @@ pub mod Registry {
     /// ====================================
     #[generate_trait]
     impl RegistryInternalImpl of RegistryInternalTrait { // Issue no. #19 Implement the functionality of _generateProfileId
-    // Internal function to create a profile
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
-    // Reference on how to implement keccak256(abi.encodePacked) 
-    // Solidity - https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
-    // Cairo - https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
-    // More about it - https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
+        // Internal function to create a profile
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
+        // Reference on how to implement keccak256(abi.encodePacked) 
+        // Solidity - https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
+        // Cairo - https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
+        // More about it - https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
 
-    // Issue no. #18 Implement the functionality of _generateAnchor
-    // Internal function to create a _generateAnchor
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
+        // Issue no. #18 Implement the functionality of _generateAnchor
+        // Internal function to create a _generateAnchor
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
 
-    // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
+        // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
 
+        fn _checkOnlyProfileOwner(_profileId: u256) {
+            assert(_isOwnerOfProfile(_profileId, get_caller_address()), Errors::UNAUTHORIZED);
+        }
     // Issue no. #4 Implement the functionality of _generateProfileId
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
