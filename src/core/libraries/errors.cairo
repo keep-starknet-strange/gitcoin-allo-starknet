@@ -1,6 +1,6 @@
 use starknet::{ContractAddress, contract_address_const};
 
-mod Errors {
+pub mod Errors {
     /// Throws as an general error when input / data is invalid.
     const INVALID: felt252 = 'Data is invalid';
     /// Thrown when mismatch in decoding data.
@@ -8,7 +8,7 @@ mod Errors {
     /// Thrown when not enough funds are available
     const NOT_ENOUGH_FUNDS: felt252 = 'Not enough funds available';
     /// Thrown when user is not authorized
-    const UNAUTHORIZED: felt252 = 'Not authorized';
+    pub const UNAUTHORIZED: felt252 = 'Not authorized';
     // // /// Thrown when address is the zero address
     // const ZERO_ADDRESS : ContractAddress = contract_address_const::<'0'>();
     /// Thrown when the function is not implemented

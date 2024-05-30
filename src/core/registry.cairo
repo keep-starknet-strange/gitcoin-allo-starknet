@@ -1,4 +1,4 @@
-use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const};
+use starknet::{ContractAddress, get_caller_address, get_contract_address};
 
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -21,32 +21,69 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IRegistry<TContractState> {}
+pub trait IRegistry<TContractState> {
+    fn add_members(ref self: TContractState, _profileID: u256, _members: Array<ContractAddress>);
+    fn is_owner_or_member_of_profile(self: @TContractState, _profileID: u256, _member: ContractAddress) ->  bool;
+    fn is_owner_of_profile(self: @TContractState, _profileID: u256, _member: ContractAddress) ->  bool;
+    fn is_member_of_profile(self: @TContractState, _profileID: u256, _member: ContractAddress) -> bool;
+}
 
 #[starknet::contract]
 pub mod Registry {
-    use starknet::ContractAddress;
+    use allo::core::libraries::errors::Errors;
+    use core::array::ArrayTrait;
+    use core::hash::{ HashStateTrait, HashStateExTrait };
+    use core::poseidon::PoseidonTrait;
+    use starknet::{ ContractAddress, get_caller_address };
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
+
+    // ==========================
+    // ======= Components =======
+    // ==========================
+    component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
+
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+
+    component!(path: AccessControlComponent, storage: accessControl, event: AccessControlComponentEvent);
+    #[abi(embed_v0)]
+    impl AccessControlComponentImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlComponentInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
     // ==========================
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        #[substorage(v0)]
+        SRC5_supported_interfaces: SRC5Component::Storage,
+        #[substorage(v0)]
+        accessControl: AccessControlComponent::Storage,
+        profilesById: LegacyMap<u256, ContractAddress>,
+    }
 
     /// ======================
     /// ======= Events =======
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        #[flat]
+        AccessControlComponentEvent: AccessControlComponent::Event,
+        #[flat]
+        SRC5ComponentEvent: SRC5Component::Event,
+    }
 
 
     #[constructor]
-    fn constructor(ref self: ContractState) { // Issue no #19
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L78C40-L79C9
-    // Implement the functionality of making sure the address is not zero and
-    // grant the Allo owner role to the owner.
-    // You can use the posiedon hashing for hasing storing Allo owner
+    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+        assert(0 != _owner.into(), 'Unexpected ZERO address');
+        self.accessControl.initializer();
+        self.accessControl._grant_role(
+            PoseidonTrait::new().update_with('ALLO_OWNER').finalize(),
+             _owner
+        );
     }
 
 
@@ -77,18 +114,17 @@ pub mod Registry {
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L214C14-L214C35
 
-    // Issue no. #10 Implement the functionality of isOwnerOrMemberOfProfile
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L229
+        fn is_owner_or_member_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+            self._is_owner_of_profile(_profileID, _member) || self._is_member_of_profile(_profileID, _member)
+        }
 
-    // Issue no. #3 Implement the functionality of isOwnerOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        fn is_member_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+            self._is_member_of_profile(_profileID, _member)
+        }
 
-    // Issue no. #5 Implement the functionality of isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        fn is_owner_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+            self._is_owner_of_profile(_profileID, _member)
+        }
 
     // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
     // Down below is the function that is to be implemented in the contract but in cairo.
@@ -98,10 +134,17 @@ pub mod Registry {
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
 
-    // Issue no. #7 Implement the functionality of addMembers
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L289
+        fn add_members(ref self: ContractState, _profileID: u256, _members: Array<ContractAddress>) {
+            self._check_only_profile_owner(_profileID);
+            let profile_id: felt252 =_profileID.try_into().unwrap();
+            let mut idx: usize = 0;
+            while let Option::Some(member) = _members.get(idx) {
+                let memberaddress = *member.unbox();
+                assert(0 != memberaddress.into(), 'Unauthorized ZERO address');
+                self.accessControl._grant_role(profile_id, memberaddress);
+                idx +=1;
+            };
+        }
 
     // Issue no. #6 Implement the functionality of removeMembers
     // Use u256 instead of bytes32
@@ -118,7 +161,8 @@ pub mod Registry {
     /// ==== Internal Functions ============
     /// ====================================
     #[generate_trait]
-    impl RegistryInternalImpl of RegistryInternalTrait { // Issue no. #19 Implement the functionality of _generateProfileId
+    impl RegistryInternalImpl of RegistryInternalTrait {
+    // Issue no. #19 Implement the functionality of _generateProfileId
     // Internal function to create a profile
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
     // Reference on how to implement keccak256(abi.encodePacked) 
@@ -130,21 +174,21 @@ pub mod Registry {
     // Internal function to create a _generateAnchor
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
 
-    // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
+        fn _check_only_profile_owner(self: @ContractState, _profileID: u256) {
+            assert(self._is_owner_of_profile(_profileID, get_caller_address()), Errors::UNAUTHORIZED);
+        }
 
     // Issue no. #4 Implement the functionality of _generateProfileId
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
 
-    // Issue no. #3 Implement the functionality of _isOwnerOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
+        fn _is_owner_of_profile(self: @ContractState, _profileID: u256, _owner: ContractAddress) -> bool {
+            self.profilesById.read(_profileID) == _owner
+        }
 
-    // Issue n. #5 Implement the functionality of _isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
-
+        fn _is_member_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+            let role: felt252 =_profileID.try_into().unwrap();
+            self.has_role(role, _member)
+        }
     }
 }
