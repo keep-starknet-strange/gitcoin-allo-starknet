@@ -21,7 +21,10 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IRegistry<TContractState> {}
+pub trait IRegistry<TContractState> {
+    fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
+    fn get_profile_by_anchor(self: @TContractState, anchor: ContractAddress) -> Registry::Profile;
+}
 
 #[starknet::contract]
 pub mod Registry {
@@ -31,7 +34,10 @@ pub mod Registry {
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        profiles_by_id: LegacyMap::<u256, Profile>,
+        anchor_to_profile_id: LegacyMap::<ContractAddress, u256>
+    }
 
     /// ======================
     /// ======= Events =======
@@ -39,6 +45,12 @@ pub mod Registry {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {}
+
+    #[derive(Drop, Serde, starknet::Store)]
+    pub struct Profile {
+        anchor: ContractAddress,
+        id: u256
+    }
 
 
     #[constructor]
@@ -59,11 +71,18 @@ pub mod Registry {
     > { // Issue no. #15 Implement the functionality to retrieve profile by profileId
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
-    // Use _profileID as u256 
+    // Use _profileID as u256
+    fn get_profile_by_id(self: @ContractState, profile_id: u256) -> Profile {
+        self.profiles_by_id.read(profile_id)
+    }
 
     // Issue no. #14 Implement the functionality to retrieve profile by anchor
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L102
+    fn get_profile_by_anchor(self: @ContractState, anchor: ContractAddress) -> Profile {
+        let profile_id: u256 = self.anchor_to_profile_id.read(anchor);
+        self.get_profile_by_id(profile_id)
+    }
 
     // Issue no. #13 Implement the functionality of createProfile
     // Down below is the function that is to be implemented in the contract but in cairo.
