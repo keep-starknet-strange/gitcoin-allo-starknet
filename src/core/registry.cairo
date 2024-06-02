@@ -21,32 +21,67 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IRegistry<TContractState> {}
+pub trait IRegistry<TContractState> {
+    fn is_member_of_profile(self: @TContractState, _profileID: u256, _member: ContractAddress) -> bool;
+}
 
 #[starknet::contract]
 pub mod Registry {
     use starknet::ContractAddress;
+    use allo::core::libraries::errors::Errors;
+    use core::hash::{HashStateTrait,HashStateExTrait};
+    use core::poseidon::PoseidonTrait;
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
 
+    // ==========================
+    // ======= Components =======
+    // ==========================
+    // This is dependency for AccessControlComponent
+    component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+
+    component!(path: AccessControlComponent, storage: accessControl, event: AccessControlComponentEvent);
+    #[abi(embed_v0)]
+    impl AccessControlComponentImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlComponentInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+    
     // ==========================
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        #[substorage(v0)]
+        SRC5_supported_interfaces: SRC5Component::Storage,
+        #[substorage(v0)]
+        accessControl: AccessControlComponent::Storage,
+    }
 
     /// ======================
     /// ======= Events =======
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        #[flat]
+        AccessControlComponentEvent: AccessControlComponent::Event,
+        #[flat]
+        SRC5ComponentEvent: SRC5Component::Event,
+    }
 
 
     #[constructor]
-    fn constructor(ref self: ContractState) { // Issue no #19
+    fn constructor(ref self: ContractState,_owner: ContractAddress) { // Issue no #19
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L78C40-L79C9
     // Implement the functionality of making sure the address is not zero and
     // grant the Allo owner role to the owner.
     // You can use the posiedon hashing for hasing storing Allo owner
+    self.accessControl.initializer();
+    self.accessControl._grant_role(
+        PoseidonTrait::new().update_with('ALLO_OWNER').finalize(),
+         _owner
+    );
     }
 
 
@@ -89,7 +124,9 @@ pub mod Registry {
     // Issue no. #5 Implement the functionality of isMemberOfProfile
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-
+    fn is_member_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+        self._is_member_of_profile(_profileID, _member)
+    }
     // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
@@ -145,6 +182,9 @@ pub mod Registry {
     // Issue n. #5 Implement the functionality of _isMemberOfProfile
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
-
+    fn _is_member_of_profile(self: @ContractState, _profileID: u256, _member: ContractAddress) ->  bool {
+        let role: felt252 =_profileID.try_into().unwrap();
+        self.has_role(role, _member)
+    }
     }
 }
