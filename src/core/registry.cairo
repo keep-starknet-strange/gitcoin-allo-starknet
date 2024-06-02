@@ -25,7 +25,9 @@ pub trait IRegistry<TContractState> {}
 
 #[starknet::contract]
 pub mod Registry {
-    use starknet::ContractAddress;
+    use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+use starknet::ContractAddress;
+    use alexandria_bytes::{Bytes, BytesTrait};
 
     // ==========================
     // === Storage Variables ====
@@ -125,7 +127,14 @@ pub mod Registry {
     // Solidity - https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
     // Cairo - https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
     // More about it - https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
-
+    fn _generateProfileId(_nonce: u256, owner: ContractAddress) -> u256 {
+        let profileId = BytesTrait::new_empty()
+            .encode_packed(_nonce)
+            .encode_packed(owner)
+            .keccak();
+        return profileId;
+    }
+    
     // Issue no. #18 Implement the functionality of _generateAnchor
     // Internal function to create a _generateAnchor
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
