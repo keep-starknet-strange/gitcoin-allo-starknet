@@ -1,6 +1,6 @@
 use starknet::{ContractAddress, contract_address_const};
 
-mod Errors {
+pub mod Errors {
     /// Throws as an general error when input / data is invalid.
     const INVALID: felt252 = 'Data is invalid';
     /// Thrown when mismatch in decoding data.
