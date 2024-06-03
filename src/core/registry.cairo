@@ -31,14 +31,26 @@ pub mod Registry {
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        profilesById: LegacyMap::<felt252, Profile>,        
+    }
 
     /// ======================
     /// ======= Events =======
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        ProfileMetadataUpdated: ProfileMetadataUpdated;
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct ProfileMetadataUpdated{
+        #[key]
+        _profileId: felt252,
+        _metadata: Metadata,
+    }
+    
 
 
     #[constructor]
@@ -48,7 +60,6 @@ pub mod Registry {
     // grant the Allo owner role to the owner.
     // You can use the posiedon hashing for hasing storing Allo owner
     }
-
 
     /// ====================================
     /// ==== External/Public Functions =====
@@ -73,10 +84,14 @@ pub mod Registry {
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L182C14-L182C31
 
-    // Issue no. #11 Implement the functionality of updateProfileMetadata
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L214C14-L214C35
+    fn updateProfileMetadata(ref self: ContractState, _profileId: felt252, _metadata: Metadata) {
+        let msg.sender = get_caller_address();
+        let caller_id = self.profilesById.read(msg.sender);
+        assert( caller_id == _profileId, "Wrong Id");
+        self.Metadata.write(_metadata);
 
+        self.emit(ProfileMetadataUpdated{_profileId, _metadata});        
+    }
     // Issue no. #10 Implement the functionality of isOwnerOrMemberOfProfile
     // Use u256 instead of bytes32
     // Down below is the function that is to be implemented in the contract but in cairo.
