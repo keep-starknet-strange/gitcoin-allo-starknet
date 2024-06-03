@@ -74,7 +74,7 @@ pub mod Registry {
     > { // Issue no. #15 Implement the functionality to retrieve profile by profileId
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
-    // Use _profileID as u<ContractState> {256 
+    // Use _profileID as u256 
 
     // Issue no. #14 Implement the functionality to retrieve profile by anchor
     // Down below is the function that is to be implemented in the contract but in cairo.
