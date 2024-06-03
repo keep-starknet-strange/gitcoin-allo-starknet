@@ -21,7 +21,9 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IRegistry<TContractState> {}
+pub trait IRegistry<TContractState> {
+    fn update_profile_pending_owner(ref self: TContractState, profile_id: felt252, pending_owner: felt252);
+}
 
 #[starknet::contract]
 pub mod Registry {
@@ -31,15 +33,28 @@ pub mod Registry {
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        #[key]
+        profile_id: felt252,
+        profile_owners: LegacyMap<felt252, felt252>,
+        profile_pending_owners: LegacyMap<felt252, felt252>,
+    }
 
     /// ======================
     /// ======= Events =======
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        ProfilePendingOwnerUpdated: ProfilePendingOwnerUpdated,
+    }
 
+    #[derive(Drop, starknet::Event)]
+    struct ProfilePendingOwnerUpdated {
+        #[key]
+        profile_id: felt252,
+        pending_owner: felt252,
+    }
 
     #[constructor]
     fn constructor(ref self: ContractState) { // Issue no #19
@@ -59,7 +74,7 @@ pub mod Registry {
     > { // Issue no. #15 Implement the functionality to retrieve profile by profileId
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
-    // Use _profileID as u256 
+    // Use _profileID as u<ContractState> {256 
 
     // Issue no. #14 Implement the functionality to retrieve profile by anchor
     // Down below is the function that is to be implemented in the contract but in cairo.
@@ -93,6 +108,9 @@ pub mod Registry {
     // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
+    fn update_profile_pending_owner(ref self: ContractState, profile_id: felt252, pending_owner: felt252) {
+
+    }
 
     // Issue no. #8 Implement the functionality of acceptProfileOwnership
     // Down below is the function that is to be implemented in the contract but in cairo.
