@@ -21,18 +21,37 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
-pub trait IRegistry<TContractState> {}
+pub trait IRegistry<TContractState> {
+    fn updateProfileMetadata (ref self: TContractState, _profileId: u256, _metadata: Registry::Metadata);
+}
 
 #[starknet::contract]
 pub mod Registry {
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, get_caller_address};
 
     // ==========================
     // === Storage Variables ====
     // ==========================
     #[storage]
     struct Storage {
-        profilesById: LegacyMap::<felt252, Profile>,        
+        profilesById: LegacyMap::<u256, Profile>,  
+        metadata: Metadata,    
+    }
+
+    #[derive(Drop, Serde, starknet::Store)]
+    pub struct Metadata {
+        protocol: u256,
+        pointer: felt252,
+    }
+    
+    #[derive(Drop, Serde, starknet::Store)]
+    pub struct Profile {
+        nonce: u256,
+        name: felt252,
+        metadata: Metadata,
+        owner: ContractAddress,
+        members: ContractAddress,
+
     }
 
     /// ======================
@@ -41,13 +60,13 @@ pub mod Registry {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ProfileMetadataUpdated: ProfileMetadataUpdated;
+        ProfileMetadataUpdated: ProfileMetadataUpdated,
     }
 
     #[derive(Drop, starknet::Event)]
     struct ProfileMetadataUpdated{
         #[key]
-        _profileId: felt252,
+        _profileId: u256,
         _metadata: Metadata,
     }
     
@@ -84,27 +103,14 @@ pub mod Registry {
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L182C14-L182C31
 
-    fn updateProfileMetadata(ref self: ContractState, _profileId: felt252, _metadata: Metadata) {
-        let msg.sender = get_caller_address();
-        let caller_id = self.profilesById.read(msg.sender);
-        assert( caller_id == _profileId, "Wrong Id");
-        self.Metadata.write(_metadata);
+    fn updateProfileMetadata(ref self: ContractState, _profileId: u256, _metadata: Metadata) {
+        let msg_sender = get_caller_address();
+        let caller = self.Profile.owner.read();
+        assert( caller == msg_sender, 'Not profile owner');
+        self.Profile.Metadata.write(_metadata);
 
         self.emit(ProfileMetadataUpdated{_profileId, _metadata});        
-    }
-    // Issue no. #10 Implement the functionality of isOwnerOrMemberOfProfile
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L229
-
-    // Issue no. #3 Implement the functionality of isOwnerOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-
-    // Issue no. #5 Implement the functionality of isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-
+    } 
     // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
