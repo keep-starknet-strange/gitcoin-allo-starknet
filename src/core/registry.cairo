@@ -37,14 +37,15 @@ pub mod Registry {
     #[abi(embed_v0)]
     impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
 
-    component!(path: AccessControlComponent, storage: accessControl, event: AccessControlComponentEvent);
+    component!(
+        path: AccessControlComponent, storage: accessControl, event: AccessControlComponentEvent
+    );
 
     #[abi(embed_v0)]
-    impl AccessControlComponentImpl = AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlComponentImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
     impl AccessControlComponentInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
-    
-    
 
     // ==========================
     // === Storage Variables ====
@@ -71,14 +72,13 @@ pub mod Registry {
 
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress) { 
+    fn constructor(ref self: ContractState, _owner: ContractAddress) {
         assert(_owner.into() == 0, Errors::ZERO_ADDRESS);
 
         let allo_owner_role = PoseidonTrait::new().update('ALLO_OWNER').finalize();
 
         self.accessControl.initializer();
         self.accessControl._grant_role(allo_owner_role, _owner)
-        
     }
 
 
