@@ -1,4 +1,5 @@
-use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const};
+use starknet::{
+    ContractAddress, get_caller_address, get_contract_address, contract_address_const};
 
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -22,12 +23,16 @@ use starknet::{ContractAddress, get_caller_address, get_contract_address, contra
 /// Interface for the Registry contract.
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
-    fn update_profile_pending_owner(ref self: TContractState, profile_id: felt252, pending_owner: felt252);
+    fn update_profile_pending_owner(
+        ref self: TContractState, profile_id: felt252, pending_owner: felt252
+    );
 }
 
 #[starknet::contract]
 pub mod Registry {
     use starknet::ContractAddress;
+    use starknet::get_caller_address;
+
 
     // ==========================
     // === Storage Variables ====
@@ -101,17 +106,35 @@ pub mod Registry {
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
 
-    // Issue no. #5 Implement the functionality of isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        // Issue no. #5 Implement the functionality of isMemberOfProfile
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+ 
+        // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
+        fn update_profile_pending_owner(
+            ref self: ContractState, profile_id: felt252, pending_owner: felt252
+        ) {
+            let caller = get_caller_address();
 
-    // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
-    fn update_profile_pending_owner(ref self: ContractState, profile_id: felt252, pending_owner: felt252) {
+            // Ensure the caller is the profile owner
+            match self.profile_owners.get(profile_id) {
+                Some(owner) => {
+                    if owner != caller {
+                        panic!("Caller is not the profile owner");
+                    }
+                },
+                None => {
+                    panic!("Profile does not exist");
+                }
+            }
+            // Set the pending owner to the profile
+            self.profile_pending_owners.insert(profile_id, pending_owner);
 
-    }
-
+            // Emit the event that the pending owner was updated
+            self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
+        }
     // Issue no. #8 Implement the functionality of acceptProfileOwnership
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
