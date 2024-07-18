@@ -8,7 +8,7 @@ pub mod Errors {
     /// Thrown when not enough funds are available
     const NOT_ENOUGH_FUNDS: felt252 = 'Not enough funds available';
     /// Thrown when user is not authorized
-    const UNAUTHORIZED: felt252 = 'Not authorized';
+    pub const UNAUTHORIZED: felt252 = 'Not authorized';
     // // /// Thrown when address is the zero address
     pub const ZERO_ADDRESS: felt252 = 'Address is Zero';
     /// Thrown when the function is not implemented
