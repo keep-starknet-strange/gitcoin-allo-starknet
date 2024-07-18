@@ -10,7 +10,7 @@ pub mod Errors {
     /// Thrown when user is not authorized
     pub const UNAUTHORIZED: felt252 = 'Not authorized';
     // // /// Thrown when address is the zero address
-    // const ZERO_ADDRESS : ContractAddress = contract_address_const::<'0'>();
+    pub const ZERO_ADDRESS: felt252 = 'Address is Zero';
     /// Thrown when the function is not implemented
     const NOT_IMPLEMENTED: felt252 = 'Not implemented';
     /// Thrown when the value is non-zero
