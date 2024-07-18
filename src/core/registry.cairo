@@ -26,27 +26,59 @@ pub trait IRegistry<TContractState> {}
 #[starknet::contract]
 pub mod Registry {
     use starknet::ContractAddress;
+    use core::poseidon::PoseidonTrait;
+    use core::hash::HashStateTrait;
+    use allo::core::libraries::errors::Errors;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
+    use openzeppelin::introspection::src5::SRC5Component;
+
+    component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
+
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+
+    component!(
+        path: AccessControlComponent, storage: accessControl, event: AccessControlComponentEvent
+    );
+
+    #[abi(embed_v0)]
+    impl AccessControlComponentImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlComponentInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+
 
     // ==========================
     // === Storage Variables ====
     // ==========================
     #[storage]
-    struct Storage {}
+    struct Storage {
+        #[substorage(v0)]
+        SRC5_supported_interfaces: SRC5Component::Storage,
+        #[substorage(v0)]
+        accessControl: AccessControlComponent::Storage,
+    }
 
     /// ======================
     /// ======= Events =======
     /// ======================
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    enum Event {
+        #[flat]
+        SRC5ComponentEvent: SRC5Component::Event,
+        #[flat]
+        AccessControlComponentEvent: AccessControlComponent::Event,
+    }
 
 
     #[constructor]
-    fn constructor(ref self: ContractState) { // Issue no #19
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L78C40-L79C9
-    // Implement the functionality of making sure the address is not zero and
-    // grant the Allo owner role to the owner.
-    // You can use the posiedon hashing for hasing storing Allo owner
+    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+        assert(_owner.into() == 0, Errors::ZERO_ADDRESS);
+
+        let allo_owner_role = PoseidonTrait::new().update('ALLO_OWNER').finalize();
+
+        self.accessControl.initializer();
+        self.accessControl._grant_role(allo_owner_role, _owner)
     }
 
 
