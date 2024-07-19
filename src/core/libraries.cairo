@@ -1,2 +1,2 @@
 mod clone;
-mod errors;
+pub mod errors;
