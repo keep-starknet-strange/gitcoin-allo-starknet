@@ -1,5 +1,4 @@
-use starknet::{
-    ContractAddress, get_caller_address, get_contract_address, contract_address_const};
+use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const};
 
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -23,16 +22,10 @@ use starknet::{
 /// Interface for the Registry contract.
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
-    fn update_profile_pending_owner(
-        ref self: TContractState, profile_id: felt252, pending_owner: ContractAddress
-    );
-}
-
-#[starknet::contract]
-pub mod Registry {
-    use starknet::ContractAddress;
-    use starknet::get_caller_address;
     fn is_owner_of_profile(self: @TContractState, profile_id: u256, owner: ContractAddress) -> bool;
+    fn update_profile_pending_owner(
+        ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
+    );
 }
 #[starknet::contract]
 pub mod Registry {
@@ -42,6 +35,8 @@ pub mod Registry {
     use allo::core::libraries::errors::Errors;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::introspection::src5::SRC5Component;
+    use starknet::get_caller_address;
+
 
     component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
 
@@ -76,30 +71,26 @@ pub mod Registry {
         owner: ContractAddress,
         anchor: ContractAddress,
     }
+
+    #[derive(Drop, starknet::Event)]
+    struct ProfilePendingOwnerUpdated {
+        #[key]
+        profile_id: u256,
+        pending_owner: ContractAddress,
+    }
+
     // ==========================
     // === Storage Variables ====
     // ==========================
     #[storage]
     struct Storage {
-
-        #[key]
-        anchor_to_profile_id: LegacyMap<ContractAddress, felt252>,
-        profiles_by_id: LegacyMap<felt252, Profile>,
-        profile_id_to_pending_owner: LegacyMap<felt252, ContractAddress>,
-    }
-
-    #[derive(Drop, Copy, Serde, PartialEq, starknet::Store)]
-    struct Profile {
-        id: felt252,
-        nonce: u256,
-        name: felt252,
-        owner: ContractAddress,
-        anchor: ContractAddress
         profiles_by_id: LegacyMap<u256, Profile>,
         #[substorage(v0)]
         SRC5_supported_interfaces: SRC5Component::Storage,
         #[substorage(v0)]
         accessControl: AccessControlComponent::Storage,
+        anchor_to_profile_id: LegacyMap<ContractAddress, u256>,
+        profile_id_to_pending_owner: LegacyMap<u256, ContractAddress>,
     }
 
     /// ======================
@@ -108,19 +99,13 @@ pub mod Registry {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ProfilePendingOwnerUpdated: ProfilePendingOwnerUpdated,
         #[flat]
         SRC5ComponentEvent: SRC5Component::Event,
         #[flat]
         AccessControlComponentEvent: AccessControlComponent::Event,
+        ProfilePendingOwnerUpdated: ProfilePendingOwnerUpdated,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct ProfilePendingOwnerUpdated {
-        #[key]
-        profile_id: felt252,
-        pending_owner: ContractAddress,
-    }
 
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress) {
@@ -140,52 +125,6 @@ pub mod Registry {
     impl Registry of super::IRegistry<
         ContractState
     > { // Issue no. #15 Implement the functionality to retrieve profile by profileId
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
-    // Use _profileID as u256 
-
-    // Issue no. #14 Implement the functionality to retrieve profile by anchor
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L102
-
-    // Issue no. #13 Implement the functionality of createProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L118C5-L125C18
-
-    // Issue no. #12 Implement the functionality of updateProfileName
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L182C14-L182C31
-
-    // Issue no. #11 Implement the functionality of updateProfileMetadata
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L214C14-L214C35
-
-    // Issue no. #10 Implement the functionality of isOwnerOrMemberOfProfile
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L229
-
-    // Issue no. #3 Implement the functionality of isOwnerOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-
-        // Issue no. #5 Implement the functionality of isMemberOfProfile
-        // Down below is the function that is to be implemented in the contract but in cairo.
-        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
- 
-        // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
-        // Down below is the function that is to be implemented in the contract but in cairo.
-        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
-        fn update_profile_pending_owner(
-            ref self: ContractState, profile_id: felt252, pending_owner: ContractAddress
-        ) {
-            self.only_profile_owner(profile_id);
-
-            self.profile_id_to_pending_owner.write(profile_id, pending_owner);
-
-            self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
-        }
-
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
         // Use _profileID as u256 
@@ -227,7 +166,16 @@ pub mod Registry {
     // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
-
+    fn update_profile_pending_owner(
+        ref self: ContractState, profile_id: u256, pending_owner: ContractAddress
+    ) {
+        let caller = get_caller_address();
+        assert(self._is_owner_of_profile(profile_id, caller), 'Not profile owner');
+    
+        self.profile_id_to_pending_owner.write(profile_id, pending_owner);
+    
+        self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
+    }
 
     // Issue no. #8 Implement the functionality of acceptProfileOwnership
     // Down below is the function that is to be implemented in the contract but in cairo.
@@ -253,40 +201,6 @@ pub mod Registry {
     /// ==== Internal Functions ============
     /// ====================================
     #[generate_trait]
-    impl RegistryInternalImpl of RegistryInternalTrait { 
-
-        fn only_profile_owner(self: @ContractState, profile_id: felt252){
-            let caller = get_caller_address();
-
-            let profile = self.profiles_by_id.read(profile_id);
-            assert(profile.owner == caller, 'Not profile owner');
-        }
-        
-        // Issue no. #19 Implement the functionality of _generateProfileId
-    // Internal function to create a profile
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
-    // Reference on how to implement keccak256(abi.encodePacked) 
-    // Solidity - https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
-    // Cairo - https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
-    // More about it - https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
-
-    // Issue no. #18 Implement the functionality of _generateAnchor
-    // Internal function to create a _generateAnchor
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
-
-    // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
-
-    // Issue no. #4 Implement the functionality of _generateProfileId
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
-
-    // Issue no. #3 Implement the functionality of _isOwnerOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
-
-
     impl RegistryInternalImpl of RegistryInternalTrait { // Issue no. #19 Implement the functionality of _generateProfileId
         // Internal function to create a profile
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
@@ -316,7 +230,6 @@ pub mod Registry {
         ) -> bool {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
-
     // Issue n. #5 Implement the functionality of _isMemberOfProfile
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
