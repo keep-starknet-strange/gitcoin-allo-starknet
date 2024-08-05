@@ -29,6 +29,8 @@ pub trait IRegistry<TContractState> {
 }
 #[starknet::contract]
 pub mod Registry {
+    use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use starknet::ContractAddress;
     use core::poseidon::PoseidonTrait;
     use core::hash::HashStateTrait;
@@ -212,7 +214,13 @@ pub mod Registry {
         // Issue no. #18 Implement the functionality of _generateAnchor
         // Internal function to create a _generateAnchor
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
-
+        fn _generateProfileId(_nonce: u256, owner: ContractAddress) -> u256 {
+            let profileId = BytesTrait::new_empty()
+                .encode_packed(_nonce)
+                .encode_packed(owner)
+                .keccak();
+            return profileId;
+        }
         // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
