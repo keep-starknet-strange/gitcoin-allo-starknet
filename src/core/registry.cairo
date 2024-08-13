@@ -26,6 +26,7 @@ pub trait IRegistry<TContractState> {
     fn update_profile_pending_owner(
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
     );
+    fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
 }
 #[starknet::contract]
 pub mod Registry {
@@ -37,7 +38,7 @@ pub mod Registry {
     use allo::core::libraries::errors::Errors;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::introspection::src5::SRC5Component;
-    use starknet::get_caller_address;
+    use starknet::{get_caller_address, contract_address_const};
 
 
     component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
@@ -93,6 +94,7 @@ pub mod Registry {
         accessControl: AccessControlComponent::Storage,
         anchor_to_profile_id: LegacyMap<ContractAddress, u256>,
         profile_id_to_pending_owner: LegacyMap<u256, ContractAddress>,
+        member_length: u256
     }
 
     /// ======================
@@ -161,24 +163,23 @@ pub mod Registry {
         ) -> bool {
             return self._is_owner_of_profile(profile_id, owner);
         }
-    // Issue no. #5 Implement the functionality of isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        // Issue no. #5 Implement the functionality of isMemberOfProfile
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
 
-    // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
-    fn update_profile_pending_owner(
-        ref self: ContractState, profile_id: u256, pending_owner: ContractAddress
-    ) {
-        let caller = get_caller_address();
-        assert(self._is_owner_of_profile(profile_id, caller), 'Not profile owner');
-    
-        self.profile_id_to_pending_owner.write(profile_id, pending_owner);
-    
-        self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
-    }
+        // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
+        fn update_profile_pending_owner(
+            ref self: ContractState, profile_id: u256, pending_owner: ContractAddress
+        ) {
+            let caller = get_caller_address();
+            assert(self._is_owner_of_profile(profile_id, caller), 'Not profile owner');
 
+            self.profile_id_to_pending_owner.write(profile_id, pending_owner);
+
+            self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
+        }
     // Issue no. #8 Implement the functionality of acceptProfileOwnership
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
@@ -187,7 +188,20 @@ pub mod Registry {
     // Use u256 instead of bytes32
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L289
-
+        fn add_members(ref self: ContractState, profile_Id: u256, members: Array<ContractAddress>) {
+            let profile_id: felt252 = profile_Id.try_into().unwrap();
+            self.member_length.write(members.len().into());
+            let mut i = 0;
+            loop {
+                if (i >= members.len().into()) {
+                    break;
+                }
+                let member: ContractAddress = *members.at(i);
+                assert(member != contract_address_const::<0>(), 'Error:ZERO_ADDRESS');
+                self.accessControl._grant_role(profile_id, member);
+                i += 1;
+            }
+        }
     // Issue no. #6 Implement the functionality of removeMembers
     // Use u256 instead of bytes32
     // Down below is the function that is to be implemented in the contract but in cairo.
