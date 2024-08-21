@@ -1,5 +1,12 @@
 use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const};
 
+#[derive(Drop, Serde, starknet::Store)]
+struct Metadata {
+    protocol: u256,
+    pointer: ByteArray,
+}
+
+
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣿⢿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -27,6 +34,7 @@ pub trait IRegistry<TContractState> {
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
     );
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
+    fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
 }
 #[starknet::contract]
 pub mod Registry {
@@ -39,7 +47,7 @@ pub mod Registry {
     use openzeppelin::access::accesscontrol::AccessControlComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use starknet::{get_caller_address, contract_address_const};
-
+    use super::{Metadata};
 
     component!(path: SRC5Component, storage: SRC5_supported_interfaces, event: SRC5ComponentEvent);
 
@@ -59,10 +67,11 @@ pub mod Registry {
     // === Structs ==============
     // ==========================
 
-    #[derive(Drop, Serde, starknet::Store)]
-    struct Metadata {
-        protocol: u256,
-        pointer: ByteArray,
+    #[derive(Drop, starknet::Event)]
+    struct ProfileMetadataUpdated {
+        #[key]
+        profile_id: u256,
+        metadata: Metadata,
     }
 
     #[derive(Drop, Serde, starknet::Store)]
@@ -108,6 +117,7 @@ pub mod Registry {
         #[flat]
         AccessControlComponentEvent: AccessControlComponent::Event,
         ProfilePendingOwnerUpdated: ProfilePendingOwnerUpdated,
+        ProfileMetadataUpdated: ProfileMetadataUpdated
     }
 
 
@@ -149,6 +159,32 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L214C14-L214C35
 
+        fn update_profile_metadata(ref self: ContractState, profile_id: u256, metadata: Metadata) {
+            // Get the address of the caller
+            let caller = get_caller_address();
+            // Ensure the caller is the owner of the profile
+            assert(self._is_owner_of_profile(profile_id, caller), 'Not profile owner');
+
+            // Read the profile from storage
+            let mut profile = self.profiles_by_id.read(profile_id);
+
+            // Update the profile's metadata with the new protocol and pointer
+            profile
+                .metadata =
+                    Metadata {
+                        protocol: metadata.protocol,
+                        pointer: metadata
+                            .pointer
+                            .clone(), //// Clone the pointer to prevent move errors
+                    };
+
+            // Write the updated profile back to storage
+            self.profiles_by_id.write(profile_id, profile);
+
+            //ProfileMetaDataUpdated Event Emit
+            self.emit(ProfileMetadataUpdated { profile_id, metadata });
+        }
+
         // Issue no. #10 Implement the functionality of isOwnerOrMemberOfProfile
         // Use u256 instead of bytes32
         // Down below is the function that is to be implemented in the contract but in cairo.
@@ -180,14 +216,14 @@ pub mod Registry {
 
             self.emit(ProfilePendingOwnerUpdated { profile_id, pending_owner, });
         }
-    // Issue no. #8 Implement the functionality of acceptProfileOwnership
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
+        // Issue no. #8 Implement the functionality of acceptProfileOwnership
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
 
-    // Issue no. #7 Implement the functionality of addMembers
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L289
+        // Issue no. #7 Implement the functionality of addMembers
+        // Use u256 instead of bytes32
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L289
         fn add_members(ref self: ContractState, profile_Id: u256, members: Array<ContractAddress>) {
             let profile_id: felt252 = profile_Id.try_into().unwrap();
             self.member_length.write(members.len().into());

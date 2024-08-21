@@ -57,6 +57,7 @@ dependencies = [
 name = "allo"
 version = "0.0.1"
 dependencies = [
+ "alexandria_bytes",
  "alexandria_math",
  "openzeppelin",
  "snforge_std",
