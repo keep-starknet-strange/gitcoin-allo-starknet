@@ -35,6 +35,7 @@ pub trait IRegistry<TContractState> {
     );
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
+    fn remove_members(ref self: TContractState, profile_id: u256, members: Array<ContractAddress>);
 }
 #[starknet::contract]
 pub mod Registry {
@@ -242,6 +243,24 @@ pub mod Registry {
     // Use u256 instead of bytes32
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L311
+
+    fn remove_members(ref self: ContractState, profile_id: u256, members: Array<ContractAddress>) {
+        let caller = get_caller_address();
+        assert(self._is_owner_of_profile(profile_id, caller), 'Not profile owner');
+
+        let profile_id_felt: felt252 = profile_id.try_into().unwrap();
+        let member_length = members.len();
+
+        let mut i: u32 = 0;
+        loop {
+            if i >= member_length {
+                break;
+            }
+            let member = *members.at(i);
+            self.accessControl._revoke_role(profile_id_felt, member);
+            i += 1;
+        };
+    }
 
     // Issue no. #16 Implement the functionality of recoverFunds
     // Down below is the function that is to be implemented in the contract but in cairo.
