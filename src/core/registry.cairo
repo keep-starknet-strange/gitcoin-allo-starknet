@@ -36,6 +36,9 @@ pub trait IRegistry<TContractState> {
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
+    fn is_member_of_profile(
+        self: @TContractState, profile_id: felt252, member: ContractAddress
+    ) -> bool;
 }
 #[starknet::contract]
 pub mod Registry {
@@ -104,7 +107,7 @@ pub mod Registry {
         accessControl: AccessControlComponent::Storage,
         anchor_to_profile_id: LegacyMap<ContractAddress, u256>,
         profile_id_to_pending_owner: LegacyMap<u256, ContractAddress>,
-        member_length: u256
+        member_length: u256,
     }
 
     /// ======================
@@ -208,6 +211,12 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
 
+        fn is_member_of_profile(
+            self: @ContractState, profile_id: felt252, member: ContractAddress
+        ) -> bool {
+            return self._is_member_of_profile(profile_id, member);
+        }
+
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
@@ -293,9 +302,13 @@ pub mod Registry {
         ) -> bool {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
-    // Issue n. #5 Implement the functionality of _isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
-
+        // Issue n. #5 Implement the functionality of _isMemberOfProfile
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
+        fn _is_member_of_profile(
+            self: @ContractState, _profile_id: felt252, _owner: ContractAddress
+        ) -> bool {
+            return self.accessControl.has_role(_profile_id, _owner);
+        }
     }
 }
