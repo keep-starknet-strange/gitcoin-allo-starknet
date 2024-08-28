@@ -36,6 +36,9 @@ pub trait IRegistry<TContractState> {
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
+    fn is_member_of_profile(
+        self: @TContractState, profile_id: felt252, member: ContractAddress
+    ) -> bool;
 }
 #[starknet::contract]
 pub mod Registry {
@@ -207,7 +210,11 @@ pub mod Registry {
         // Issue no. #5 Implement the functionality of isMemberOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-
+        fn is_member_of_profile(
+            self: @ContractState, profile_id: felt252, member: ContractAddress
+        ) -> bool {
+            return self.accessControl.has_role(profile_id, member);
+        }
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
