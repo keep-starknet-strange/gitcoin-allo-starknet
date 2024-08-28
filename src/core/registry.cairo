@@ -36,6 +36,7 @@ pub trait IRegistry<TContractState> {
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn remove_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
+    fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
 }
 #[starknet::contract]
 pub mod Registry {
@@ -76,7 +77,7 @@ pub mod Registry {
     }
 
     #[derive(Drop, Serde, starknet::Store)]
-    struct Profile {
+    pub struct Profile {
         id: u256,
         nonce: u256,
         name: ByteArray,
@@ -143,6 +144,10 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
         // Use _profileID as u256 
+
+        fn get_profile_by_id(self: @ContractState, profile_id: u256) -> Profile {
+            return self.profiles_by_id.read(profile_id);
+        }
 
         // Issue no. #14 Implement the functionality to retrieve profile by anchor
         // Down below is the function that is to be implemented in the contract but in cairo.
@@ -279,13 +284,6 @@ pub mod Registry {
         // Issue no. #18 Implement the functionality of _generateAnchor
         // Internal function to create a _generateAnchor
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L340
-        fn _generateProfileId(_nonce: u256, owner: ContractAddress) -> u256 {
-            let profileId = BytesTrait::new_empty()
-                .encode_packed(_nonce)
-                .encode_packed(owner)
-                .keccak();
-            return profileId;
-        }
         // Issue no. #17 Implement the functionality of _checkOnlyProfileOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L331
@@ -294,6 +292,13 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
 
+        fn _generateProfileId(_nonce: u256, owner: ContractAddress) -> u256 {
+            let profileId = BytesTrait::new_empty()
+                .encode_packed(_nonce)
+                .encode_packed(owner)
+                .keccak();
+            return profileId;
+        }
         // Issue no. #3 Implement the functionality of _isOwnerOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L375C14-L375C31
