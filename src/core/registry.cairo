@@ -37,7 +37,7 @@ pub trait IRegistry<TContractState> {
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
     fn is_member_of_profile(
-        self: @TContractState, profile_id: felt252, member: ContractAddress
+        self: @TContractState, profile_id: u256, member: ContractAddress
     ) -> bool;
 }
 #[starknet::contract]
@@ -212,7 +212,7 @@ pub mod Registry {
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
 
         fn is_member_of_profile(
-            self: @ContractState, profile_id: felt252, member: ContractAddress
+            self: @ContractState, profile_id: u256, member: ContractAddress
         ) -> bool {
             return self._is_member_of_profile(profile_id, member);
         }
@@ -306,8 +306,9 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
         fn _is_member_of_profile(
-            self: @ContractState, _profile_id: felt252, _owner: ContractAddress
+            self: @ContractState, _profile_id: u256, _owner: ContractAddress
         ) -> bool {
+            let _profile_id: felt252 = _profile_id.try_into().unwrap();
             return self.accessControl.has_role(_profile_id, _owner);
         }
     }
