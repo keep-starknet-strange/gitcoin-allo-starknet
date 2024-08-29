@@ -36,6 +36,7 @@ pub trait IRegistry<TContractState> {
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
+    fn accept_profile_ownership(ref self: TContractState, profile_id: u256);
 }
 #[starknet::contract]
 pub mod Registry {
@@ -92,6 +93,13 @@ pub mod Registry {
         pending_owner: ContractAddress,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct ProfileOwnerUpdated {
+        #[key]
+        profile_id: u256,
+        owner: ContractAddress,
+    }
+
     // ==========================
     // === Storage Variables ====
     // ==========================
@@ -118,7 +126,8 @@ pub mod Registry {
         #[flat]
         AccessControlComponentEvent: AccessControlComponent::Event,
         ProfilePendingOwnerUpdated: ProfilePendingOwnerUpdated,
-        ProfileMetadataUpdated: ProfileMetadataUpdated
+        ProfileMetadataUpdated: ProfileMetadataUpdated,
+        ProfileOwnerUpdated: ProfileOwnerUpdated
     }
 
 
@@ -224,6 +233,25 @@ pub mod Registry {
         // Issue no. #8 Implement the functionality of acceptProfileOwnership
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L267
+        fn accept_profile_ownership(ref self: ContractState, profile_id: u256) {
+            // Read the profile from storage
+            let mut profile = self.profiles_by_id.read(profile_id);
+
+            // Ensure the caller is the pending owner of the profile
+            let caller = get_caller_address();
+            let new_owner = self.profile_id_to_pending_owner.read(profile_id);
+            assert(new_owner == caller, 'Not profile pending owner');
+            
+            // Clear the pending owner
+            self.profile_id_to_pending_owner.write(profile_id, contract_address_const::<0>());
+            
+            // Update the profile's owner
+            profile.owner = new_owner;
+            self.profiles_by_id.write(profile_id, profile);
+
+            // ProfileOwnerUpdated Event Emit
+            self.emit(ProfileOwnerUpdated { profile_id, owner: new_owner });
+        }
 
         // Issue no. #7 Implement the functionality of addMembers
         // Use u256 instead of bytes32
