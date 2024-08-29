@@ -36,6 +36,7 @@ pub trait IRegistry<TContractState> {
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
+    fn get_profile_by_anchor(self: @TContractState, anchor: ContractAddress) -> Registry::Profile;
 }
 #[starknet::contract]
 pub mod Registry {
@@ -151,6 +152,11 @@ pub mod Registry {
         // Issue no. #14 Implement the functionality to retrieve profile by anchor
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L102
+
+        fn get_profile_by_anchor(self: @ContractState, anchor: ContractAddress) -> Profile {
+            let profile_id = self.anchor_to_profile_id.read(anchor);
+            return self.profiles_by_id.read(profile_id);
+        }
 
         // Issue no. #13 Implement the functionality of createProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
