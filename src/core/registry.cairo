@@ -29,6 +29,9 @@ struct Metadata {
 /// Interface for the Registry contract.
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
+    fn is_member_of_profile(
+        self: @TContractState, profile_id: u256, member: ContractAddress
+    ) -> bool;
     fn is_owner_of_profile(self: @TContractState, profile_id: u256, owner: ContractAddress) -> bool;
     fn update_profile_pending_owner(
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
@@ -207,6 +210,11 @@ pub mod Registry {
         // Issue no. #5 Implement the functionality of isMemberOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        fn is_member_of_profile(
+            self: @ContractState, profile_id: u256, member: ContractAddress
+        ) -> bool {
+            return self.is_member_of_profile(profile_id, member);
+        }
 
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
