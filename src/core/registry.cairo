@@ -39,6 +39,9 @@ pub trait IRegistry<TContractState> {
     fn is_member_of_profile(
         self: @TContractState, profile_id: u256, member: ContractAddress
     ) -> bool;
+    fn is_owner_or_member_of_profile(
+        self: @TContractState, profile_id: u256, member: ContractAddress
+    ) -> bool;
 }
 #[starknet::contract]
 pub mod Registry {
@@ -197,6 +200,13 @@ pub mod Registry {
         // Use u256 instead of bytes32
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L229
+
+        fn is_owner_or_member_of_profile(
+            self: @ContractState, profile_id: u256, member: ContractAddress
+        ) -> bool {
+            return self._is_owner_of_profile(profile_id, member)
+                || self._is_member_of_profile(profile_id, member);
+        }
 
         // Issue no. #3 Implement the functionality of isOwnerOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
