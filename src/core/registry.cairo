@@ -23,15 +23,20 @@ struct Metadata {
 //                    allo.gitcoin.co
 
 /// Registry contract
-/// Solidity equivalent: https://github.com/allo-protocol/allo-v2/blob/main/contracts/core/Registry.sol
+/// Solidity equivalent:
+/// https://github.com/allo-protocol/allo-v2/blob/main/contracts/core/Registry.sol
 
 /// Registry contract interface
 /// Interface for the Registry contract.
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
     fn is_owner_of_profile(self: @TContractState, profile_id: u256, owner: ContractAddress) -> bool;
-    fn is_member_of_profile(self: @TContractState, profile_id: u256, member: ContractAddress) -> bool;
-    fn is_owner_or_member_of_profile(self: @TContractState, profile_id: u256, account: ContractAddress) -> bool;
+    fn is_member_of_profile(
+        self: @TContractState, profile_id: u256, member: ContractAddress
+    ) -> bool;
+    fn is_owner_or_member_of_profile(
+        self: @TContractState, profile_id: u256, account: ContractAddress
+    ) -> bool;
     fn update_profile_pending_owner(
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
     );
@@ -41,7 +46,7 @@ pub trait IRegistry<TContractState> {
 }
 #[starknet::contract]
 pub mod Registry {
-use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
+    use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
     use alexandria_bytes::{Bytes, BytesTrait};
     use starknet::ContractAddress;
     use core::poseidon::PoseidonTrait;
@@ -144,7 +149,7 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
     > { // Issue no. #15 Implement the functionality to retrieve profile by profileId
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L94
-        // Use _profileID as u256 
+        // Use _profileID as u256
 
         fn get_profile_by_id(self: @ContractState, profile_id: u256) -> Profile {
             return self.profiles_by_id.read(profile_id);
@@ -200,7 +205,8 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
         fn is_owner_or_member_of_profile(
             self: @ContractState, profile_id: u256, account: ContractAddress
         ) -> bool {
-            return self._is_owner_of_profile(profile_id, account) || self.is_member_of_profile(profile_id, account);
+            return self._is_owner_of_profile(profile_id, account)
+                || self.is_member_of_profile(profile_id, account);
         }
 
 
@@ -218,7 +224,7 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
 
         fn is_member_of_profile(
-            self: @ContractState, profile_id:u256, member: ContractAddress
+            self: @ContractState, profile_id: u256, member: ContractAddress
         ) -> bool {
             return self.is_member_of_profile(profile_id, member);
         }
@@ -258,12 +264,12 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
                 i += 1;
             }
         }
-    // Issue no. #6 Implement the functionality of removeMembers
+        // Issue no. #6 Implement the functionality of removeMembers
     // Use u256 instead of bytes32
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L311
 
-    // Issue no. #16 Implement the functionality of recoverFunds
+        // Issue no. #16 Implement the functionality of recoverFunds
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L392C14-L392C26
 
@@ -276,10 +282,13 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
     impl RegistryInternalImpl of RegistryInternalTrait { // Issue no. #19 Implement the functionality of _generateProfileId
         // Internal function to create a profile
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L366
-        // Reference on how to implement keccak256(abi.encodePacked) 
-        // Solidity - https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
-        // Cairo - https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
-        // More about it - https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
+        // Reference on how to implement keccak256(abi.encodePacked)
+        // Solidity -
+        // https://github.com/celestiaorg/blobstream-contracts/blob/0b4bcf69d1ce96df000da7f95fba8c03aa15a45e/src/lib/tree/namespace/TreeHasher.sol#L33
+        // Cairo -
+        // https://github.com/keep-starknet-strange/blobstream-starknet/blob/b74777e5fb479e5b4aa5a1419135e0826343fc37/src/tree/namespace/hasher.cairo#L10
+        // More about it -
+        // https://github.com/keep-starknet-strange/alexandria/tree/main/src/encoding
 
         // Issue no. #18 Implement the functionality of _generateAnchor
         // Internal function to create a _generateAnchor
@@ -308,7 +317,7 @@ use alexandria_encoding::sol_abi::encode::SolAbiEncodeTrait;
         ) -> bool {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
-    // Issue n. #5 Implement the functionality of _isMemberOfProfile
+        // Issue n. #5 Implement the functionality of _isMemberOfProfile
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
 
