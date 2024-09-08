@@ -6,7 +6,6 @@ struct Metadata {
     pointer: ByteArray,
 }
 
-
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⣿⢿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣗⠀⠀⠀⢸⣿⣿⣿⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -82,6 +81,7 @@ pub mod Registry {
         metadata: Metadata,
     }
 
+
     #[derive(Drop, Serde, starknet::Store)]
     pub struct Profile {
         id: u256,
@@ -91,6 +91,7 @@ pub mod Registry {
         owner: ContractAddress,
         anchor: ContractAddress,
     }
+
 
     #[derive(Drop, starknet::Event)]
     struct ProfilePendingOwnerUpdated {
@@ -206,7 +207,7 @@ pub mod Registry {
             self: @ContractState, profile_id: u256, account: ContractAddress
         ) -> bool {
             return self._is_owner_of_profile(profile_id, account)
-                || self.is_member_of_profile(profile_id, account);
+                || self._is_member_of_profile(profile_id, account);
         }
 
 
@@ -226,7 +227,7 @@ pub mod Registry {
         fn is_member_of_profile(
             self: @ContractState, profile_id: u256, member: ContractAddress
         ) -> bool {
-            return self.is_member_of_profile(profile_id, member);
+            return self._is_member_of_profile(profile_id, member);
         }
 
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
@@ -318,8 +319,14 @@ pub mod Registry {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
         // Issue n. #5 Implement the functionality of _isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
-
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
+        fn _is_member_of_profile(
+            self: @ContractState, _profile_id: u256, _owner: ContractAddress
+        ) -> bool {
+            let _profile_id: felt252 = _profile_id.try_into().unwrap();
+            return self.accessControl.has_role(_profile_id, _owner);
+        }
     }
 }
+
