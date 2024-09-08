@@ -30,6 +30,9 @@ struct Metadata {
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
     fn is_owner_of_profile(self: @TContractState, profile_id: u256, owner: ContractAddress) -> bool;
+    fn is_member_of_profile(
+        self: @TContractState, profile_id: u256, member: ContractAddress
+    ) -> bool;
     fn update_profile_pending_owner(
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
     );
@@ -207,6 +210,12 @@ pub mod Registry {
         // Issue no. #5 Implement the functionality of isMemberOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
+        fn is_member_of_profile(
+            self: @ContractState, profile_id: u256, member: ContractAddress
+        ) -> bool {
+            let profile_id_u128: u128 = profile_id.low.into(); // Cast to u128 (lower part of u256)
+            return self._is_member_of_profile(profile_id_u128, member);
+        }
 
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
@@ -293,9 +302,15 @@ pub mod Registry {
         ) -> bool {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
-    // Issue n. #5 Implement the functionality of _isMemberOfProfile
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
 
+        // Issue n. #5 Implement the functionality of _isMemberOfProfile
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
+        fn _is_member_of_profile(
+            self: @ContractState, _profile_id: u128, _member: ContractAddress
+        ) -> bool {
+            let profile_id_felt: felt252 = _profile_id.into(); // Cast u128 to felt252
+            return AccessControlComponentImpl::has_role(self, profile_id_felt, _member);
+        }
     }
 }
