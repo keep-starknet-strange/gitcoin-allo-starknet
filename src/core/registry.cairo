@@ -40,6 +40,7 @@ pub trait IRegistry<TContractState> {
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
     );
     fn add_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
+    fn remove_members(ref self: TContractState, profile_Id: u256, members: Array<ContractAddress>);
     fn update_profile_metadata(ref self: TContractState, profile_id: u256, metadata: Metadata);
     fn get_profile_by_id(self: @TContractState, profile_id: u256) -> Registry::Profile;
 }
@@ -266,10 +267,25 @@ pub mod Registry {
             }
         }
         // Issue no. #6 Implement the functionality of removeMembers
-    // Use u256 instead of bytes32
-    // Down below is the function that is to be implemented in the contract but in cairo.
-    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L311
+        // Use u256 instead of bytes32
+        // Down below is the function that is to be implemented in the contract but in cairo.
+        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L311
 
+        fn remove_members(
+            ref self: ContractState, profile_Id: u256, members: Array<ContractAddress>
+        ) {
+            let profile_id: felt252 = profile_Id.try_into().unwrap();
+            self.member_length.write(members.len().into());
+            let mut i = 0;
+            loop {
+                if (i >= members.len().into()) {
+                    break;
+                }
+                let member: ContractAddress = *members.at(i);
+                self.accessControl._revoke_role(profile_id, member);
+                i += 1;
+            }
+        }
         // Issue no. #16 Implement the functionality of recoverFunds
     // Down below is the function that is to be implemented in the contract but in cairo.
     // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L392C14-L392C26
