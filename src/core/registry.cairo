@@ -30,7 +30,7 @@ struct Metadata {
 #[starknet::interface]
 pub trait IRegistry<TContractState> {
     fn is_owner_of_profile(self: @TContractState, profile_id: u256, owner: ContractAddress) -> bool;
-  
+
 
     fn update_profile_pending_owner(
         ref self: TContractState, profile_id: u256, pending_owner: ContractAddress
@@ -200,9 +200,6 @@ pub mod Registry {
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L229
 
-  
-
-
         // Issue no. #3 Implement the functionality of isOwnerOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
@@ -215,7 +212,7 @@ pub mod Registry {
         // Issue no. #5 Implement the functionality of isMemberOfProfile
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L245
-+
+
         // Issue no. #9 Implement the functionality of UpdateProfilePendingOwner
         // Down below is the function that is to be implemented in the contract but in cairo.
         // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L253
@@ -320,8 +317,8 @@ pub mod Registry {
             return self.profiles_by_id.read(_profile_id).owner == _owner;
         }
         // Issue n. #5 Implement the functionality of _isMemberOfProfile
-        // Down below is the function that is to be implemented in the contract but in cairo.
-        // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
+    // Down below is the function that is to be implemented in the contract but in cairo.
+    // https://github.com/allo-protocol/allo-v2/blob/4dd0ea34a504a16ac90e80f49a5570b8be9b30e9/contracts/core/Registry.sol#L384C14-L384C32
 
     }
 }
