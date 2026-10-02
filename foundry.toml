@@ -1,0 +1,14 @@
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "ds-test/=lib/ds-test/src/",
+    "forge-std/=lib/forge-std/src/",
+    "solidity-bytes-utils/=lib/solidity-bytes-utils/",
+    "contracts/=contracts/",
+    "tests/=tests/"
+]
+
+# See more config options https://github.com/foundry-rs/starknet-foundry#configuration
